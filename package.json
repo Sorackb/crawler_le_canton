@@ -1,0 +1,30 @@
+{
+  "name": "crawler_le_canton",
+  "version": "1.0.0",
+  "description": "Robô de busca de preços de reserva em tempo real para o Hotel Village Le Canton",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sorackb/crawler_le_canton.git"
+  },
+  "keywords": [
+    "crawler",
+    "hotel",
+    "village",
+    "lecanton"
+  ],
+  "author": "sorackb <sorackb@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sorackb/crawler_le_canton/issues"
+  },
+  "homepage": "https://github.com/Sorackb/crawler_le_canton#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.4"
+  }
+}
