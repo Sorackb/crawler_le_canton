@@ -62,21 +62,38 @@ const converter = (parametros) => Object.keys(parametros).map((chave) => encodeU
  */
 const processar = async (html) => {
   const $ = cheerio.load(html);
-  const resultado = [];
+  const quartos = [];
+  let quarto;
 
-  $('.roomExcerpt').each((indice, elemento) => {
-    const nome = $(elemento).find('h5 > a').text();
-    const preco = $(elemento).find('.sincePriceContent h6').text();
-    const descricao = $(elemento).find('p > a').text();
+  $('table.maintable > tbody > tr').each((indice, elemento) => {
+    if ($(elemento).hasClass('roomName')) {
+      const nome = $(elemento).find('h5 > a').text();
+      const descricao = $(elemento).find('p > a').text();
 
-    resultado.push({
-      nome,
-      preco,
-      descricao,
-    })
+      quarto = {
+        nome,
+        descricao,
+        precos: [],
+      };
+
+      quartos.push(quarto);
+    } else if ($(elemento).hasClass('item')) {
+      const descricao = $(elemento).find('.rateName > a').text();
+      const extras = $(elemento).find('.extras').text().replace(/\n/g, '');
+      const preco = $(elemento).find('.ratePriceTable').text().replace(/\n/g, '');
+      const valor = parseFloat($(elemento).find('.priceDecimal').val());
+
+      quarto.preco = quarto.preco && quarto.preco > valor ? quarto.preco : valor;
+
+      quarto.precos.push({
+        descricao,
+        extras,
+        preco,
+      });
+    }
   });
 
-  return resultado;
+  return quartos;
 };
 
 /**
