@@ -9,6 +9,8 @@
 
 const { request } = require('axios');
 const cheerio = require('cheerio');
+const { writeFileSync } = require('fs');
+const { resolve } = require('path');
 
 /**
  * Aguarda o tempo determinado para completar a promessa
@@ -31,16 +33,16 @@ const sleep = ms => new Promise(res => setTimeout(res, ms));
  *
  * @private
  */
-const retry = async (url, opcoes, tentativa = 0, delay = 0) => {
+const requisitar = async (url, opcoes, tentativa = 0, delay = 0) => {
   try {
     await sleep(delay);
-    const { data } = await request({ url, ...opcoes });
+    const { data, headers: { ['set-cookie']: cookies} } = await request({ url, ...opcoes });
 
-    return data;
+    return { data, cookies };
   } catch (e) {
     if (tentativa >= 5) throw e;
 
-    return retry(url, opcoes, tentativa + 1, (delay || 1000) * 2);
+    return requisitar(url, opcoes, tentativa + 1, (delay || 1000) * 2);
   }
 };
 
@@ -54,21 +56,60 @@ const retry = async (url, opcoes, tentativa = 0, delay = 0) => {
 const converter = (parametros) => Object.keys(parametros).map((chave) => encodeURIComponent(chave) + '=' + encodeURIComponent(parametros[chave])).join('&');
 
 /**
+ * Baixa as imagens referentes ao quarto
+ *
+ * @param {array} links Links das imagens
+ * @param {array} cookies Cookies para realizar o download
+ *
+ * @returns {Promise<*|void>} Representação dos nomes dos arquivos baixados
+ *
+ * @private
+ */
+const baixar = async (links, cookies) => {
+  const promessas = links.map(async (link) => {
+    const opcoes = {
+      headers: {
+        'Content-Type': 'image/jpeg',
+        Cookie: cookies.map((cookie) => cookie.substr(0, cookie.indexOf(';'))).join(';'),
+      },
+      responseType: 'arraybuffer',
+      withCredentials: true,
+      method: 'GET',
+      timeout: 0,
+    };
+
+    const partes = link.split('=');
+    const nome = partes[partes.length -1];
+    const { data } = await requisitar(`https://myreservations.omnibees.com${link}`, opcoes);
+    writeFileSync(resolve('public/imagens', nome), new Buffer(data, 'binary'), 'binary');
+    return nome;
+  });
+
+  return await Promise.all(promessas);
+};
+
+/**
  * Processa o HTML e retorna as informações disponíveis
  *
  * @param {string} html O HTML a ser analisado
  *
  * @returns {object} O objeto contendo as informações requisitadas
+ *
+ * @private
  */
-const processar = async (html) => {
+const processar = async (html, cookies) => {
   const $ = cheerio.load(html);
   const quartos = [];
+  const promessas = [];
   let quarto;
 
   $('table.maintable > tbody > tr').each((indice, elemento) => {
     if ($(elemento).hasClass('roomName')) {
       const nome = $(elemento).find('h5 > a').text();
       const descricao = $(elemento).find('p > a').text();
+
+      const links = $(elemento).find('img').map((index, img) => $(img).attr('src')).get();
+      promessas.push(baixar(links, cookies));
 
       quarto = {
         nome,
@@ -93,6 +134,12 @@ const processar = async (html) => {
     }
   });
 
+  const imagens = await Promise.all(promessas);
+
+  for (let indice = 0; indice < imagens.length; indice++) {
+    quartos[indice].imagens = imagens[indice];
+  }
+
   return quartos;
 };
 
@@ -103,15 +150,31 @@ const processar = async (html) => {
  */
 const buscar = async ({ checkin, checkout }) => {
   const opcoes = {
-    headers: {
-      Cookie: '__cfduid=deace4b4698962c027da7620cd4d295cf1545087939;ASP.NET_SessionId=cdzzwc2bkjp34vjfuthorxfr;',
-    },
     withCredentials: true,
     method: 'GET',
     timeout: 30000,
   };
 
-  const parametros = {
+  let parametros = {
+    q: '5462',
+    version: 'MyReservation',
+  };
+
+  const { data, cookies } = await requisitar(`https://myreservations.omnibees.com/default.aspx?${converter(parametros)}`, opcoes);
+  const inicio = data.indexOf("CheckSession('") + "CheckSession('".length;
+  const sid = data.substring(inicio, data.indexOf("'", inicio + "CheckSession('".length));
+
+  cookies.push(`${sid}_window=${sid}`);
+
+  opcoes.headers = {
+    Cookie: cookies.map((cookie) => cookie.substr(0, cookie.indexOf(';'))).join(';'),
+  };
+
+  delete parametros.version;
+
+  parametros = {
+    ...parametros,
+    sid,
     ucUrl: 'SearchResultsByRoom',
     diff: 'false',
     CheckIn: `${checkin}`,
@@ -123,13 +186,11 @@ const buscar = async ({ checkin, checkout }) => {
     ad: '1',
     ch: '0',
     ag: '-',
-    q: '5462',
-    sid: '8f6b990c-a176-4e95-8bd6-3bb131efbacb',
     rnd: '1545232398058',
   };
 
-  const resposta = await retry(`https://myreservations.omnibees.com/Handlers/ajaxLoader.ashx?${converter(parametros)}`, opcoes);
-  const quartos = await processar(resposta);
+  const { data: resposta } = await requisitar(`https://myreservations.omnibees.com/Handlers/ajaxLoader.ashx?${converter(parametros)}`, opcoes);
+  const quartos = await processar(resposta, cookies);
 
   return { quartos };
 };
