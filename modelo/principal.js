@@ -36,7 +36,7 @@ const sleep = ms => new Promise(res => setTimeout(res, ms));
 const requisitar = async (url, opcoes, tentativa = 0, delay = 0) => {
   try {
     await sleep(delay);
-    const { data, headers: { ['set-cookie']: cookies} } = await request({ url, ...opcoes });
+    const { data, headers: { 'set-cookie': cookies } } = await request({ url, ...opcoes });
 
     return { data, cookies };
   } catch (e) {
@@ -53,7 +53,7 @@ const requisitar = async (url, opcoes, tentativa = 0, delay = 0) => {
  *
  * @returns {string} Parâmetros devidamente formatados para URL
  */
-const converter = (parametros) => Object.keys(parametros).map((chave) => encodeURIComponent(chave) + '=' + encodeURIComponent(parametros[chave])).join('&');
+const converter = parametros => Object.keys(parametros).map(chave => `${encodeURIComponent(chave)}=${encodeURIComponent(parametros[chave])}`).join('&');
 
 /**
  * Baixa as imagens referentes ao quarto
@@ -70,7 +70,7 @@ const baixar = async (links, cookies) => {
     const opcoes = {
       headers: {
         'Content-Type': 'image/jpeg',
-        Cookie: cookies.map((cookie) => cookie.substr(0, cookie.indexOf(';'))).join(';'),
+        Cookie: cookies.map(cookie => cookie.substr(0, cookie.indexOf(';'))).join(';'),
       },
       responseType: 'arraybuffer',
       withCredentials: true,
@@ -79,13 +79,13 @@ const baixar = async (links, cookies) => {
     };
 
     const partes = link.split('=');
-    const nome = partes[partes.length -1];
+    const nome = partes[partes.length - 1];
     const { data } = await requisitar(`https://myreservations.omnibees.com${link}`, opcoes);
     writeFileSync(resolve('publico/imagens', nome), Buffer.from(data, 'binary'), 'binary');
     return nome;
   });
 
-  return await Promise.all(promessas);
+  return Promise.all(promessas);
 };
 
 /**
@@ -121,7 +121,9 @@ const processar = async (html, cookies) => {
       quartos.push(quarto);
     } else if ($(elemento).hasClass('item')) { // Insere as informações de preço do último quarto
       const descricao = $(elemento).find('.rateName > a').text();
-      const extras = $(elemento).find('.extras').text().replace(/\n/g, '');
+      const extras = $(elemento).find('.extras').text().replace(/\n/g, ' ')
+        .replace(/[ ]{2,}/g, ' ')
+        .trim();
       const preco = $(elemento).find('.ratePriceTable').text().replace(/\n/g, '');
       const valor = parseFloat($(elemento).find('.priceDecimal').val());
 
@@ -136,10 +138,11 @@ const processar = async (html, cookies) => {
     }
   });
 
+  // Aguarda o download das imagens para inserir os nomes nos quartos
   const imagens = await Promise.all(promessas);
 
   // Organiza os nomes das imagens em seus respectivos quartos
-  for (let indice = 0; indice < imagens.length; indice++) {
+  for (let indice = 0; indice < imagens.length; indice + 1) {
     quartos[indice].imagens = imagens[indice];
   }
 
@@ -168,10 +171,11 @@ const buscar = async ({ checkin, checkout }) => {
   const inicio = data.indexOf("CheckSession('") + "CheckSession('".length;
   const sid = data.substring(inicio, data.indexOf("'", inicio + "CheckSession('".length));
 
+  // Adiciona o sid aos cookies
   cookies.push(`${sid}_window=${sid}`);
 
   opcoes.headers = {
-    Cookie: cookies.map((cookie) => cookie.substr(0, cookie.indexOf(';'))).join(';'),
+    Cookie: cookies.map(cookie => cookie.substr(0, cookie.indexOf(';'))).join(';'),
   };
 
   delete parametros.version;

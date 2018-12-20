@@ -96,7 +96,7 @@ Um `JSON` contendo um `array` nomeado como `quartos` em que cada elemento possui
             "precos": [
                 {
                     "descricao": "Tarifa",
-                    "extras": "Não Reembolsável+Pensão Completa+Internet Wi-Fi+Estacionamento",
+                    "extras": "Não Reembolsável + Pensão Completa+Internet Wi-Fi + Estacionamento",
                     "preco": "R$ 1.575,00"
                 }
             ],
