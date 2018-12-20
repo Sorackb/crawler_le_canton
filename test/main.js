@@ -7,8 +7,6 @@ chai.use(chaiHttp);
 chai.should();
 
 describe('/POST buscar', () => {
-  this.timeout(600000); // 10 minutos
-
   it('Deve buscar as informações de quartos disponíveis', function(done) {
     this.timeout(30000);
 
