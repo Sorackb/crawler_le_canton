@@ -12,6 +12,8 @@ const cheerio = require('cheerio');
 const { writeFileSync } = require('fs');
 const { resolve } = require('path');
 
+const HOST = 'https://myreservations.omnibees.com';
+
 /**
  * Aguarda o tempo determinado para completar a promessa
  *
@@ -80,7 +82,7 @@ const baixar = async (links, cookies) => {
 
     const partes = link.split('=');
     const nome = partes[partes.length - 1];
-    const { data } = await requisitar(`https://myreservations.omnibees.com${link}`, opcoes);
+    const { data } = await requisitar(`${HOST}${link}`, opcoes);
     writeFileSync(resolve('publico/imagens', nome), Buffer.from(data, 'binary'), 'binary');
     return nome;
   });
@@ -167,7 +169,7 @@ const buscar = async ({ checkin, checkout }) => {
   };
 
   // Faz a primeira requisição para conseguir os cookies e um sid válido
-  const { data, cookies } = await requisitar(`https://myreservations.omnibees.com/default.aspx?${converter(parametros)}`, opcoes);
+  const { data, cookies } = await requisitar(`${HOST}/default.aspx?${converter(parametros)}`, opcoes);
   const inicio = data.indexOf("CheckSession('") + "CheckSession('".length;
   const sid = data.substring(inicio, data.indexOf("'", inicio + "CheckSession('".length));
 
@@ -183,10 +185,10 @@ const buscar = async ({ checkin, checkout }) => {
   parametros = {
     ...parametros,
     sid,
+    checkin,
+    checkout,
     ucUrl: 'SearchResultsByRoom',
     diff: 'false',
-    CheckIn: `${checkin}`,
-    CheckOut: `${checkout}`,
     Code: '',
     group_code: '',
     loyality_card: '',
@@ -198,7 +200,7 @@ const buscar = async ({ checkin, checkout }) => {
   };
 
   // Realiza a requisição buscando pelos parâmetros desejados
-  const { data: resposta } = await requisitar(`https://myreservations.omnibees.com/Handlers/ajaxLoader.ashx?${converter(parametros)}`, opcoes);
+  const { data: resposta } = await requisitar(`${HOST}/Handlers/ajaxLoader.ashx?${converter(parametros)}`, opcoes);
   const quartos = await processar(resposta, cookies);
 
   return { quartos };

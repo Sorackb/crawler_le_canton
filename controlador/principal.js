@@ -28,7 +28,7 @@ const buscar = async ({ body: { checkin, checkout } }, res) => {
     const [inicio, fim] = await Promise.all([tratar(checkin), tratar(checkout)]);
     res.send(await modelo.buscar({ checkin: inicio, checkout: fim }));
   } catch (e) {
-    res.status(500).send(e.message || 'Ocorreu um erro interno');
+    res.status(500).send(e.message);
   }
 };
 
