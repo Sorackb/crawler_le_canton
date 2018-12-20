@@ -4,6 +4,7 @@
   "description": "Robô de busca de preços de reserva em tempo real para o Hotel Village Le Canton",
   "main": "index.js",
   "scripts": {
+    "start": "node index",
     "test": "nyc --reporter=html --reporter=text mocha --sort",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
