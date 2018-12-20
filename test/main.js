@@ -10,7 +10,7 @@ describe('/POST buscar', () => {
   it('Deve buscar as informações de quartos disponíveis', function(done) {
     this.timeout(30000);
 
-    chai.request(servidor).post('/buscar').send({ checkin: '01/01/2019', checkout: '05/01/2019' }).end(function(err, res) {
+    chai.request(servidor).post('/buscar').send({ checkin: '25/12/2018', checkout: '26/12/2018' }).end(function(err, res) {
       res.should.have.status(200);
       res.body.should.be.a('object');
 
