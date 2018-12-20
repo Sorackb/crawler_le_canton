@@ -58,8 +58,8 @@ const converter = parametros => Object.keys(parametros).map(chave => `${encodeUR
 /**
  * Baixa as imagens referentes ao quarto
  *
- * @param {array} links Links das imagens
- * @param {array} cookies Cookies para realizar o download
+ * @param {array} links - Links das imagens
+ * @param {array} cookies - Cookies para realizar o download
  *
  * @returns {Promise<*|void>} Representação dos nomes dos arquivos baixados
  *
@@ -91,7 +91,7 @@ const baixar = async (links, cookies) => {
 /**
  * Processa o HTML e retorna as informações disponíveis
  *
- * @param {string} html O HTML a ser analisado
+ * @param {string} html - O HTML a ser analisado
  *
  * @returns {object} O objeto contendo as informações requisitadas
  *
