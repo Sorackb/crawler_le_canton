@@ -81,7 +81,7 @@ const baixar = async (links, cookies) => {
     const partes = link.split('=');
     const nome = partes[partes.length -1];
     const { data } = await requisitar(`https://myreservations.omnibees.com${link}`, opcoes);
-    writeFileSync(resolve('publico/imagens', nome), new Buffer(data, 'binary'), 'binary');
+    writeFileSync(resolve('publico/imagens', nome), Buffer.from(data, 'binary'), 'binary');
     return nome;
   });
 
