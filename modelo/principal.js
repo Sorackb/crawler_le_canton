@@ -142,7 +142,7 @@ const processar = async (html, cookies) => {
   const imagens = await Promise.all(promessas);
 
   // Organiza os nomes das imagens em seus respectivos quartos
-  for (let indice = 0; indice < imagens.length; indice + 1) {
+  for (let indice = 0; indice < imagens.length; indice++) {
     quartos[indice].imagens = imagens[indice];
   }
 
