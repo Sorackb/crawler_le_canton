@@ -14,3 +14,11 @@ app.use('/', principal);
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(`Servidor GMC sendo executado na porta ${server.address().port}`);
 });
+
+const parar = async () => {
+  server.close();
+};
+
+// Para realizar os testes
+module.exports = app;
+module.exports.parar = parar;

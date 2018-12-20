@@ -81,7 +81,7 @@ const baixar = async (links, cookies) => {
     const partes = link.split('=');
     const nome = partes[partes.length -1];
     const { data } = await requisitar(`https://myreservations.omnibees.com${link}`, opcoes);
-    writeFileSync(resolve('public/imagens', nome), new Buffer(data, 'binary'), 'binary');
+    writeFileSync(resolve('publico/imagens', nome), new Buffer(data, 'binary'), 'binary');
     return nome;
   });
 
@@ -104,6 +104,7 @@ const processar = async (html, cookies) => {
   let quarto;
 
   $('table.maintable > tbody > tr').each((indice, elemento) => {
+    // Cria um quarto
     if ($(elemento).hasClass('roomName')) {
       const nome = $(elemento).find('h5 > a').text();
       const descricao = $(elemento).find('p > a').text();
@@ -118,12 +119,13 @@ const processar = async (html, cookies) => {
       };
 
       quartos.push(quarto);
-    } else if ($(elemento).hasClass('item')) {
+    } else if ($(elemento).hasClass('item')) { // Insere as informações de preço do último quarto
       const descricao = $(elemento).find('.rateName > a').text();
       const extras = $(elemento).find('.extras').text().replace(/\n/g, '');
       const preco = $(elemento).find('.ratePriceTable').text().replace(/\n/g, '');
       const valor = parseFloat($(elemento).find('.priceDecimal').val());
 
+      // Insere o menor preço
       quarto.preco = quarto.preco && quarto.preco > valor ? quarto.preco : valor;
 
       quarto.precos.push({
@@ -136,6 +138,7 @@ const processar = async (html, cookies) => {
 
   const imagens = await Promise.all(promessas);
 
+  // Organiza os nomes das imagens em seus respectivos quartos
   for (let indice = 0; indice < imagens.length; indice++) {
     quartos[indice].imagens = imagens[indice];
   }
@@ -160,6 +163,7 @@ const buscar = async ({ checkin, checkout }) => {
     version: 'MyReservation',
   };
 
+  // Faz a primeira requisição para conseguir os cookies e um sid válido
   const { data, cookies } = await requisitar(`https://myreservations.omnibees.com/default.aspx?${converter(parametros)}`, opcoes);
   const inicio = data.indexOf("CheckSession('") + "CheckSession('".length;
   const sid = data.substring(inicio, data.indexOf("'", inicio + "CheckSession('".length));
@@ -189,6 +193,7 @@ const buscar = async ({ checkin, checkout }) => {
     rnd: '1545232398058',
   };
 
+  // Realiza a requisição buscando pelos parâmetros desejados
   const { data: resposta } = await requisitar(`https://myreservations.omnibees.com/Handlers/ajaxLoader.ashx?${converter(parametros)}`, opcoes);
   const quartos = await processar(resposta, cookies);
 
